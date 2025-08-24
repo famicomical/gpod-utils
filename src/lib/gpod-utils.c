@@ -112,6 +112,15 @@ char* gpod_sortname(const char* name_)
 
 const char* gpod_default_mountpoint(char* dest_, size_t n_)
 {
+    const char*  env = getenv("IPOD_MOUNT_POINT");
+    if (env && *env) {
+        if (strlen(env) >= n_) {
+            return NULL;
+        }
+        strcpy(dest_, env);
+        return dest_;
+    }
+
     struct passwd   pw = { 0 };
     struct passwd*  res = &pw;
     struct passwd*  ptr;
