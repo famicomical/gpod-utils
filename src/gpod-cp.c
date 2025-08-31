@@ -610,7 +610,6 @@ thread_cleanup:
         g_error_free(error);
         error = NULL;
     }
-
     gpod_cp_ta_free(args);
 }
 
