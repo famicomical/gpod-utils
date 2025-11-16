@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Ray whatdoineed2do @ gmail com
+ * Copyright (C) 2021-2025 Ray whatdoineed2do @ gmail com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -212,6 +212,10 @@ _track(const char* file_, struct gpod_ff_transcode_ctx* xfrm_, uint64_t uuid_, I
     track = gpod_ff_meta_to_track(&mi, time_added_, sanitize_);
     track->mediatype |= opts.mediatype;
 
+    if (mi.coverart.data) {
+	itdb_track_set_thumbnails_from_data(track, mi.coverart.data, mi.coverart.size);
+    }
+
     gpod_ff_media_info_free(&mi);
 
     // needs full path because the track has no itdb structure at this point
@@ -293,7 +297,7 @@ static int  gpod_cp_track(const struct gpod_cp_log_ctx* lctx_,
             stats.xcode_time += (xfrm_->path[0]) ? xcodetime_ : 0;
             ++(*added_);
             itdb_filename_ipod2fs(track->ipod_path);
-            gpod_cp_log(lctx_, "{ title='%s' artist='%s' album='%s' ipod_path='%s' }\n", track->title ? track->title : "", track->artist ? track->artist : "", track->album ? track->album : "", track->ipod_path);
+            gpod_cp_log(lctx_, "{ title='%s' artist='%s' album='%s' coverart=%s ipod_path='%s' }\n", track->title ? track->title : "", track->artist ? track->artist : "", track->album ? track->album : "", itdb_track_has_thumbnails(track) ? "yes" : "no", track->ipod_path);
 
             *pending_ = g_slist_append(*pending_, g_strdup(track->ipod_path));
 

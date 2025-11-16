@@ -136,6 +136,10 @@ static void  _remove_track(bool interactv_, Itdb_iTunesDB* itdb_, Itdb_Track* tr
     g_unlink(path);
     *bytes_ += track_->size;
 
+    if (itdb_track_has_thumbnails(track_)) {
+        itdb_track_remove_thumbnails(track_);
+    }
+
     // remove (and free mem)
     itdb_track_remove(track_);
     ++(*removed_);

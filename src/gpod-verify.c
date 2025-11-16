@@ -368,6 +368,11 @@ int main (int argc, char *argv[])
 	for (GList* j=itdb->playlists; j!=NULL; j=j->next) {
 	    itdb_playlist_remove_track((Itdb_Playlist*)j->data, track);
 	}
+
+	if (itdb_track_has_thumbnails(track)) {
+            itdb_track_remove_thumbnails(track);
+        }
+
         itdb_track_remove(track);
         stats.rm_bytes += track->size;
     }
