@@ -136,12 +136,12 @@ static void  gpod_cp_log(const struct gpod_cp_log_ctx* ctx_, const char* fmt_, .
 static bool  _track_key_valid(Itdb_Track* track_)
 {
     return track_->title && track_->album && track_->artist &&
-           strlen(track_->title) && 
-           strlen(track_->album) && 
+           strlen(track_->title) &&
+           strlen(track_->album) &&
            strlen(track_->artist);
 }
 
-/* parse the track info to make sure its a compatible format, if not supported 
+/* parse the track info to make sure its a compatible format, if not supported
  * attempt transcode otherwise NULL retruned
  */
 static Itdb_Track*
@@ -364,7 +364,7 @@ static int  gpod_cp_track(const struct gpod_cp_log_ctx* lctx_,
             }
 
             if ((*added_)%10 == 0) {
-                // force a upd of the db and clear down pending list 
+                // force a upd of the db and clear down pending list
                 if (gpod_write_db(itdb, mountpoint, pending_) < 0) {
                     return -1;
                 }
@@ -480,7 +480,7 @@ void gpod_cp_thread(gpointer args_, gpointer pool_args_)
     Itdb_Track*  track = NULL;
     struct gpod_ff_transcode_ctx  xfrm;
 
-    const struct gpod_cp_log_ctx  lctx = { 
+    const struct gpod_cp_log_ctx  lctx = {
       args->requested, args->N, args->path
     };
     struct timeval  tv = { 0 };
@@ -578,7 +578,7 @@ int  gpod_cp_init()
     }
 
     if ( (gpod_lockfd=open(GPOD_CP_LOCKFILE, O_CREAT|O_TRUNC|O_WRONLY, 0660)) < 0 &&
-         flock(gpod_lockfd, LOCK_EX) < 0) 
+         flock(gpod_lockfd, LOCK_EX) < 0)
     {
         return -errno;
     }
@@ -819,7 +819,7 @@ int main (int argc, char *argv[])
             case 'P':  opts.recent.pl = optarg;  break;
             case 'n':  opts.recent.limit = atoi(optarg);  break;
 
-            case 'm':  
+            case 'm':
 	    {
 		struct mediatype_map {
 		    const char*  type;
@@ -917,7 +917,7 @@ int main (int argc, char *argv[])
 	    mountpoint[len-1] = '\0';
 	}
     }
- 
+
     if (error)
     {
         if (error->message) {
@@ -991,10 +991,10 @@ int main (int argc, char *argv[])
     const uint32_t  current = g_list_length(mpl->members);
     g_print("copying %u tracks to iPod %s %s, currently %u tracks%s\n", N,
 		itdb_info_get_ipod_generation_string(ipodinfo->ipod_generation),
-		ipodinfo->model_number, 
+		ipodinfo->model_number,
 		current, extra);
 
-    /* validate that the requested xcode encoder is supported; we expect that 
+    /* validate that the requested xcode encoder is supported; we expect that
      * mp3 is supported!
      */
     if (!gpod_ff_enc_supported(opts.enc)->supported)

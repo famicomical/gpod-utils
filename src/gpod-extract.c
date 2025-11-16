@@ -277,7 +277,7 @@ enum FilenameFormat {
 
 static void  _output_name(char* dest_, unsigned avail_, enum FilenameFormat ofmt_, const Itdb_Track* track_)
 {
-    /* we must have the extension.. if the values we want pushes past the size 
+    /* we must have the extension.. if the values we want pushes past the size
      * availabe, we have to trunc
      */
     const char*  ext = strrchr(track_->ipod_path, '.');

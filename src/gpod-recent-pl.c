@@ -104,7 +104,7 @@ main (int argc, char *argv[])
             itdb = itdb_parse_file(opts.itdb_path, &error);
             argtype = "file";
 
-            // the Device info is /mnt/iPod_Control/Device - if we've been given a db 
+            // the Device info is /mnt/iPod_Control/Device - if we've been given a db
             // location /mnt/iPod_Control/iTunes/iTunesDB we can figure this out
 
             char*  dmp;

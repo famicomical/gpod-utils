@@ -66,7 +66,7 @@ void  gpod_ff_media_info_init(struct gpod_ff_media_info*  obj_)
 
 
 /* Mapping between the metadata name(s) and the offset
- * of the equivalent metadata field in struct gpod_ff_meta 
+ * of the equivalent metadata field in struct gpod_ff_meta
  */
 struct metadata_map
 {
@@ -330,7 +330,7 @@ const struct gpod_video_support {
 	.max_width = 640,
 	.max_height = 480,
 	.max_vbit_rate = 2500000,
-	.max_fps = 30, 
+	.max_fps = 30,
 	.max_abit_rate = 1600,
 	.channels = 2,
 	.sample_rate = 48000,
@@ -340,7 +340,7 @@ const struct gpod_video_support {
 	    FF_PROFILE_H264_CONSTRAINED_BASELINE,
 	    FF_PROFILE_UNKNOWN
 	},
-	.device = (Itdb_IpodGeneration[]){ 
+	.device = (Itdb_IpodGeneration[]){
 	    ITDB_IPOD_GENERATION_VIDEO_1,
 	    ITDB_IPOD_GENERATION_VIDEO_2,
 	    ITDB_IPOD_GENERATION_UNKNOWN }
@@ -349,7 +349,7 @@ const struct gpod_video_support {
     // in reality, this is redundant since the only ipods supporting video that we can update (does not need iTuneCDB is the ipod video
     {
 	.max_width = 1280,
-	.max_height = 720, 
+	.max_height = 720,
 	.max_vbit_rate = 2500000,
 	.max_fps = 30,
 	.max_abit_rate = 1600,
@@ -620,7 +620,7 @@ int  gpod_ff_scan(struct gpod_ff_media_info *info_, const char *file_, Itdb_Ipod
                 }
                 /* WARNING: will fallthrough to default case, don't move */
                 /* FALLTHROUGH */
-     
+
     // everything we're not supporting even if its a valid audio
 
             default:
@@ -650,7 +650,7 @@ Itdb_Track*  gpod_ff_meta_to_track(const struct gpod_ff_media_info* meta_, time_
     }
 
     Itdb_Track*  track = itdb_track_new();
-    
+
     track->mediatype = meta_->has_video ? ITDB_MEDIATYPE_MOVIE : ITDB_MEDIATYPE_AUDIO;
     track->time_added = time_added_ ? time_added_ : time(NULL);
     track->time_modified = track->time_added;
@@ -720,7 +720,7 @@ void  gpod_ff_transcode_ctx_init(struct gpod_ff_transcode_ctx* obj_,
 	obj_->extn = ".m4a";
         obj_->audio_opts.quality_scale_factor = 1.0;
 
-        /* fdk-aac encoder only accepts vbr 1-5 (best), rather than the ffmpeg 
+        /* fdk-aac encoder only accepts vbr 1-5 (best), rather than the ffmpeg
          * -q:a 1 (best)-9 so fudge it
          */
         if (quality_ <= GPOD_FF_XCODE_VBR_MAX) {
