@@ -458,7 +458,7 @@ void extract_coverart(AVFormatContext* ctx_, struct gpod_ff_coverart* coverart_)
 	goto out;
     }
 
-    if ((error = encode_frame_to_jpeg(frame, 600, 600, &coverart_->data, &coverart_->size)) != 0) {
+    if ((error = encode_frame_to_jpeg(frame, 300, 300, &coverart_->data, &coverart_->size)) != 0) {
 	g_debug("failed to scale encode embedded artwork, falling back to attach - %s\n", av_err2str(error));
         coverart_->size = pkt.size;
         coverart_->data = g_malloc(coverart_->size);
