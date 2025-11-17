@@ -35,6 +35,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -381,18 +382,44 @@ static int encode_frame_to_jpeg(AVFrame *src, int out_w, int out_h,
     enc_ctx->height = out_h;
     enc_ctx->time_base = (AVRational){1, 25};
 
+#define TARGET_PCT_QUALITY 65
+    // quality 0..31 (lower is better)
+    enc_ctx->global_quality = FF_QP2LAMBDA * 1+(100-TARGET_PCT_QUALITY)*30/100;
+    dst->quality = enc_ctx->global_quality;
+
     if ((ret = avcodec_open2(enc_ctx, enc, NULL)) < 0) goto fail;
 
     pkt = av_packet_alloc();
-    if (!pkt) { ret = AVERROR(ENOMEM); goto fail; }
+    if (!pkt) {
+        ret = AVERROR(ENOMEM);
+        goto fail;
+    }
 
     if ((ret = avcodec_send_frame(enc_ctx, dst)) < 0) goto fail;
     ret = avcodec_receive_packet(enc_ctx, pkt);
     if (ret < 0) goto fail;
 
     *outbuf = malloc(pkt->size);
-    if (!*outbuf) { ret = AVERROR(ENOMEM); goto fail; }
+    if (!*outbuf) {
+        ret = AVERROR(ENOMEM);
+        goto fail;
+    }
     memcpy(*outbuf, pkt->data, pkt->size);
+#ifdef GPOD_FF_DEBUG_ARTWORK
+{
+    int fd;
+    char path[PATH_MAX+1] = { 0 };
+    snprintf(path, sizeof(path), "/tmp/gpod-ffmpeg-coverart-%ld.jpg", time(NULL));
+    if ( (fd = open(path, O_CREAT|O_WRONLY, S_IRUSR|S_IWUSR)) < 0-1 ) {
+      g_debug("failed to dump coverart to %s - %s\n", path, strerror(errno));
+    }
+    else {
+      write(fd, *outbuf, pkt->size);
+      close(fd);
+      g_debug("wrote coverart to %s\n", path);
+    }
+}
+#endif
     *outsize = pkt->size;
 
     ret = 0;
