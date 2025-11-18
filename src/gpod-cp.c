@@ -57,6 +57,7 @@ struct {
     bool enc_fallback;
     enum gpod_ff_transcode_quality  xcode_quality;
     bool  sync_meta;
+    bool  artwork;
     time_t  time_added;
     bool  sanitize;
     bool  replace;
@@ -74,6 +75,7 @@ struct {
    .enc_fallback = true,
    .xcode_quality = GPOD_FF_XCODE_VBR1,
    .sync_meta = true,
+   .artwork = true,
    .time_added = 0,
    .sanitize = true,
    .replace = true,
@@ -212,7 +214,7 @@ _track(const char* file_, struct gpod_ff_transcode_ctx* xfrm_, uint64_t uuid_, I
     track = gpod_ff_meta_to_track(&mi, time_added_, sanitize_);
     track->mediatype |= opts.mediatype;
 
-    if (mi.coverart.data) {
+    if (opts.artwork && mi.coverart.data) {
 	itdb_track_set_thumbnails_from_data(track, mi.coverart.data, mi.coverart.size);
     }
 
@@ -666,6 +668,7 @@ void  _usage(const char* argv0_)
 	     "    -r  --tracks-replace           <Y|N>                    replace existing track of same title/album/artist - default: Y\n"
 	     "    -m  --tracks-media-type        <media type>             podcast|audiobook (audio/video determined automatically)\n"
 	     "    -t  --tracks-time-added        <time added>             spoof 'added' time to specified date in ISO8601\n"
+	     "    -a  --disable-artwork                                   disable sync'ing artwork from audio file to iPod\n"
 	     "\n"
 	     "  Encoding (forced xcode of iPod unsupported formats)\n"
 	     "    -e  --encoder                  <%s>           transcode via ffmpeg/libavcodec <%s> - default: %s\n"
@@ -706,6 +709,7 @@ int main (int argc, char *argv[])
 	{"tracks-replace",		2, 0, 'r' },
 	{"tracks-media-type", 		1, 0, 'm' },
 	{"tracks-time-added", 		1, 0, 't' },
+	{"disable-artwork", 		0, 0, 'a' },
 
 	{"encoder", 			1, 0, 'e' },
 	{"disable-encoder-fallback", 	0, 0, 'E' },
@@ -758,6 +762,10 @@ int main (int argc, char *argv[])
 		    else if (toupper(optarg[0]) == 'N')  opts.sync_meta = false;
 		}
 	    } break;
+
+	    case 'a':
+	        opts.artwork = false;
+		break;
 
             case 'e':
 	    {
