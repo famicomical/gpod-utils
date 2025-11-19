@@ -601,6 +601,16 @@ void  gpod_cp_destroy()
     unlink(GPOD_CP_LOCKFILE);
 }
 
+
+static const char* _avversion_to_string(char* buf_, size_t bufsz_, unsigned ver_)
+{
+    snprintf(buf_, bufsz_, "%d.%d.%d",
+	     AV_VERSION_MAJOR(ver_),
+	     AV_VERSION_MINOR(ver_),
+	     AV_VERSION_MICRO(ver_));
+    return buf_;
+}
+
 void  _usage(const char* argv0_)
 {
     char *basename = g_path_get_basename(argv0_);
@@ -641,20 +651,24 @@ void  _usage(const char* argv0_)
     }
 
 
+    char buf0[12];
+    char buf1[12];
+    char buf2[12];
+    char buf3[12];
+    char buf4[12];
     g_print ("%s\n", PACKAGE_STRING);
     g_print ("  ffmpeg %s:\n"
-	     "    libavutil:     %d.%d.%d\n"
-	     "    libavcodec:    %d.%d.%d\n"
-	     "    libavformat:   %d.%d.%d\n"
-	     "    libswresample: %d.%d.%d\n"
-	     "    libswscale:    %d.%d.%d\n",
+	     "    libavutil:     %11s  (%s)\n"
+	     "    libavcodec:    %11s  (%s)\n"
+	     "    libavformat:   %11s  (%s)\n"
+	     "    libswresample: %11s  (%s)\n"
+	     "    libswscale:    %11s  (%s)\n",
 	       av_version_info(),
-	       AV_VERSION_MAJOR(avutil_version()), AV_VERSION_MINOR(avutil_version()), AV_VERSION_MICRO(avutil_version()),
-	       AV_VERSION_MAJOR(avcodec_version()), AV_VERSION_MINOR(avcodec_version()), AV_VERSION_MICRO(avcodec_version()),
-	       AV_VERSION_MAJOR(avformat_version()), AV_VERSION_MINOR(avformat_version()), AV_VERSION_MICRO(avformat_version()),
-	       AV_VERSION_MAJOR(swresample_version()), AV_VERSION_MINOR(swresample_version()), AV_VERSION_MICRO(swresample_version()),
-
-	       AV_VERSION_MAJOR(swscale_version()), AV_VERSION_MINOR(swscale_version()), AV_VERSION_MICRO(swscale_version()));
+	       _avversion_to_string(buf0, sizeof(buf0)-1, avutil_version()),     AV_STRINGIFY(LIBAVUTIL_VERSION),
+	       _avversion_to_string(buf1, sizeof(buf1)-1, avcodec_version()),    AV_STRINGIFY(LIBAVCODEC_VERSION),
+	       _avversion_to_string(buf2, sizeof(buf2)-1, avformat_version()),   AV_STRINGIFY(LIBAVFORMAT_VERSION),
+	       _avversion_to_string(buf3, sizeof(buf3)-1, swresample_version()), AV_STRINGIFY(LIBSWRESAMPLE_VERSION),
+	       _avversion_to_string(buf4, sizeof(buf4)-1, swscale_version()),    AV_STRINGIFY(LIBSWSCALE_VERSION));
 
     g_print ("usage: %s  [OPTIONS] <file|directory> [<file|directory> ...]\n"
 	     "\n"
