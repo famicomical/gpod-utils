@@ -646,12 +646,15 @@ void  _usage(const char* argv0_)
 	     "    libavutil:     %d.%d.%d\n"
 	     "    libavcodec:    %d.%d.%d\n"
 	     "    libavformat:   %d.%d.%d\n"
-	     "    libswresample: %d.%d.%d\n",
+	     "    libswresample: %d.%d.%d\n"
+	     "    libswscale:    %d.%d.%d\n",
 	       av_version_info(),
 	       AV_VERSION_MAJOR(avutil_version()), AV_VERSION_MINOR(avutil_version()), AV_VERSION_MICRO(avutil_version()),
 	       AV_VERSION_MAJOR(avcodec_version()), AV_VERSION_MINOR(avcodec_version()), AV_VERSION_MICRO(avcodec_version()),
 	       AV_VERSION_MAJOR(avformat_version()), AV_VERSION_MINOR(avformat_version()), AV_VERSION_MICRO(avformat_version()),
-	       AV_VERSION_MAJOR(swresample_version()), AV_VERSION_MINOR(swresample_version()), AV_VERSION_MICRO(swresample_version()));
+	       AV_VERSION_MAJOR(swresample_version()), AV_VERSION_MINOR(swresample_version()), AV_VERSION_MICRO(swresample_version()),
+
+	       AV_VERSION_MAJOR(swscale_version()), AV_VERSION_MINOR(swscale_version()), AV_VERSION_MICRO(swscale_version()));
 
     g_print ("usage: %s  [OPTIONS] <file|directory> [<file|directory> ...]\n"
 	     "\n"
