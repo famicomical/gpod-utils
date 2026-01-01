@@ -26,6 +26,7 @@
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
+#include "version.h"
 
 #include <sys/file.h>
 #include <sys/types.h>
@@ -658,7 +659,7 @@ void  _usage(const char* argv0_)
     char buf2[12];
     char buf3[12];
     char buf4[12];
-    g_print ("%s\n", PACKAGE_STRING);
+    g_print ("%s: %s-%s\n", basename, GIT_TAG, GIT_COMMIT);
     g_print ("  ffmpeg %s:\n"
 	     "    libavutil:     %11s  (%s)\n"
 	     "    libavcodec:    %11s  (%s)\n"
@@ -741,6 +742,7 @@ int main (int argc, char *argv[])
         {"playlist-with-m3u", 		2, 0, '3' },
 
 	{"help", 			0, 0, 'h' },
+        {"version", 			0, 0, 'v' },
 
 	{0, 0, 0,  0 }
     };
@@ -927,6 +929,7 @@ int main (int argc, char *argv[])
                 break;
             }
 
+            case 'v':
             case 'h':
             default:
                 _usage(argv[0]);

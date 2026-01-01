@@ -19,6 +19,8 @@
  *
  */
 
+#include "version.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,7 +40,7 @@
 void  _usage(char* argv0_)
 {
     char *basename = g_path_get_basename (argv0_);
-    g_print ("%s\n", PACKAGE_STRING);
+    g_print ("%s: %s-%s\n", basename, GIT_TAG, GIT_COMMIT);
     g_print ("usage: %s -M <dir ipod mount> | <file iTunesDB> [-n album_limit] [-3]\n"
              "\n"
              "    creates set of playlists (and optionally m3us) of recently added tracks\n"
@@ -70,7 +72,7 @@ main (int argc, char *argv[])
     int  ret = 0;
 
     int  c;
-    while ( (c=getopt(argc, argv, "M:Q:n:3:h")) != EOF)
+    while ( (c=getopt(argc, argv, "M:Q:n:3:hv")) != EOF)
     {
         switch (c) {
             case 'M':  opts.itdb_path = optarg;  break;
@@ -78,6 +80,7 @@ main (int argc, char *argv[])
             case 'n':  opts.album_limit = atol(optarg);  break;
             case '3':  opts.with_m3u = true;  break;
 
+            case 'v':
             case 'h':
             default:
                 _usage(argv[0]);

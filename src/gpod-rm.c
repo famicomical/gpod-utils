@@ -20,6 +20,8 @@
  * This product is not supported/written/published by Apple!
 */
 
+#include "version.h"
+
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -215,7 +217,7 @@ static void  autoclean(bool interactv_, Itdb_iTunesDB* itdb_, uint64_t* removed_
 void  _usage(const char* argv0_)
 {
     char *basename = g_path_get_basename (argv0_);
-    g_print ("%s\n", PACKAGE_STRING);
+    g_print ("%s: %s-%s\n", basename, GIT_TAG, GIT_COMMIT);
     g_print ("usage: %s  -M <dir ipod mount>  [ -a ] [ -i ] [-P] [ <file | ipod id> ... ]\n"
 	     "\n"
 	     "    Removes specified file(s) the iPod/iTunesDB\n"
@@ -250,7 +252,7 @@ main (int argc, char *argv[])
 
 
     int c;
-    while ( (c=getopt(argc, argv, "M:aiPh")) != EOF) {
+    while ( (c=getopt(argc, argv, "M:aiPhv")) != EOF) {
         switch (c) {
             case 'M':  opts.itdb_path = optarg;  break;
             case 'a':  opts.autoclean = true;  break;
@@ -258,6 +260,7 @@ main (int argc, char *argv[])
 
             case 'P':  opts.playlists = true;  break;
 
+            case 'v':
             case 'h':
             default:
                 _usage(argv[0]);

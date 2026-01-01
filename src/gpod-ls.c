@@ -24,6 +24,8 @@
  * Copyright (C) 2006 Christophe Fergeau  <teuf@gnome.org>
 */
 
+#include "version.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -422,7 +424,7 @@ _playlist (Itdb_Playlist *playlist, sqlite3* hdl_, TrkHashTbl* htbl_, bool cksum
 void  _usage(char* argv0_)
 {
     char *basename = g_path_get_basename (argv0_);
-    g_print ("%s\n", PACKAGE_STRING);
+    g_print ("%s: %s-%s\n", basename, GIT_TAG, GIT_COMMIT);
     g_print ("usage: %s  OPTIONS\n"
              "\n"
              "    dumps the iTunesDB as a json object listing internal (iPod,\n"
@@ -479,6 +481,7 @@ main (int argc, char *argv[])
         { "enable-checksum",    0, 0, 'c' },
         { "disable-checksum",   0, 0, 'c'+255 },
         { "help",               0, 0, 'h' },
+        { "version",            0, 0, 'v' },
         { 0, 0, 0, 0 }
     };
     char  opt_args[1+ sizeof(long_opts)*3] = { 0 };
@@ -507,6 +510,7 @@ main (int argc, char *argv[])
             case 'c':  opts.cksum = true;  break;
             case 'c'+255:  opts.cksum = false;  break;
 
+            case 'v':
             case 'h':
             default:
                 _usage(argv[0]);
