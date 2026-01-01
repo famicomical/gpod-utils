@@ -481,7 +481,7 @@ main (int argc, char *argv[])
         { "help",               0, 0, 'h' },
         { 0, 0, 0, 0 }
     };
-    char  opt_args[1+ sizeof(long_opts)*2] = { 0 };
+    char  opt_args[1+ sizeof(long_opts)*3] = { 0 };
     {
         char*  og = opt_args;
         const struct option* op = long_opts;
@@ -489,6 +489,9 @@ main (int argc, char *argv[])
             *og++ = op->val;
             if (op->has_arg != no_argument) {
                 *og++ = ':';
+                if (op->has_arg == optional_argument) {
+                    *og++ = ':';
+                }
             }
             ++op;
         }
