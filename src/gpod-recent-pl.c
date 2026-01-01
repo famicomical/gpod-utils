@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021 Ray <whatdoineed2do @ gmail com>
+ *  Copyright (C) 2021=2026 Ray <whatdoineed2do @ gmail com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,9 +39,9 @@ void  _usage(char* argv0_)
 {
     char *basename = g_path_get_basename (argv0_);
     g_print ("%s\n", PACKAGE_STRING);
-    g_print ("usage: %s -M <dir ipod mount> | <file iTunesDB> [-n album_limit]\n"
+    g_print ("usage: %s -M <dir ipod mount> | <file iTunesDB> [-n album_limit] [-3]\n"
              "\n"
-             "    creates set of playlists of recently added albums\n"
+             "    creates set of playlists (and optionally m3us) of recently added tracks\n"
              "\n"
              "    Playlists of: 0wk (most recent update), 1wk, 1months, 3months, 6months, 12months\n"
              "\n"
@@ -64,17 +64,19 @@ main (int argc, char *argv[])
         const char*  itdb_path;
         const char*  db_path;
 	unsigned  album_limit;
-    } opts = { NULL, NULL, 50 };
+        bool with_m3u;
+    } opts = { NULL, NULL, 50, false };
 
     int  ret = 0;
 
     int  c;
-    while ( (c=getopt(argc, argv, "M:Q:n:h")) != EOF)
+    while ( (c=getopt(argc, argv, "M:Q:n:3:h")) != EOF)
     {
         switch (c) {
             case 'M':  opts.itdb_path = optarg;  break;
             case 'Q':  opts.db_path = optarg;  break;
             case 'n':  opts.album_limit = atol(optarg);  break;
+            case '3':  opts.with_m3u = true;  break;
 
             case 'h':
             default:
@@ -133,7 +135,7 @@ main (int argc, char *argv[])
 
     unsigned  recent_pl, recent_tracks;
 
-    gpod_playlist_recent(&recent_pl, &recent_tracks, itdb, opts.album_limit, 0);
+    gpod_playlist_recent(&recent_pl, &recent_tracks, itdb, opts.album_limit, 0, opts.with_m3u);
 
     if (recent_tracks > 0)
     {
