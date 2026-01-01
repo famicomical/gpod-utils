@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021 Ray <whatdoineed2do @ gmail com>
+ *  Copyright (C) 2021-2026 Ray <whatdoineed2do @ gmail com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -667,7 +667,30 @@ struct recent_create_pl_args {
 	unsigned  pl;
 	unsigned  tracks;
     } stats;
+    bool with_m3u;
 };
+
+static int gpod_recent_create_m3u_playlist(const char* plname_, GSList* tracks_, const char* destdir_) {
+    char  out_path[PATH_MAX] = { 0 };
+    snprintf(out_path, sizeof(out_path), "%s/%s.m3u", destdir_, plname_);
+
+    FILE*  fp = fopen(out_path, "w");
+    if (fp == NULL) {
+        g_print("Error creating m3u playlist '%s' - %s", out_path, strerror(errno));
+        return -1;
+    }
+
+    fprintf(fp, "#EXTM3U\n");
+
+    unsigned  duration_sec;
+    for (GSList* t=tracks_; t!=NULL; t=t->next) {
+        const Itdb_Track*  trk = (const Itdb_Track*)t->data;
+        duration_sec = trk->tracklen / 1000;
+        fprintf(fp, "#EXTINF:%u,%s\n%s\n", duration_sec, trk->title ? trk->title : "<unknown>", trk->ipod_path);
+    }
+    fclose(fp);
+    return 0;
+}
 
 static void gpod_recent_create_playlists(gpointer recent_, gpointer args_)
 {
@@ -690,6 +713,9 @@ static void gpod_recent_create_playlists(gpointer recent_, gpointer args_)
     for (GSList* p=recent->tracks; p!=NULL; p=p->next) {
 	itdb_playlist_add_track(pl, p->data, -1);
 	++(args->stats.tracks);
+    }
+    if (args->with_m3u) {
+        gpod_recent_create_m3u_playlist(recent->name, recent->tracks, itdb_get_mountpoint(args->itdb));
     }
 }
 
@@ -794,7 +820,7 @@ static void  track_mostrecent(gpointer track_, gpointer when_)
     }
 }
 
-void  gpod_playlist_recent(unsigned* playlists_, unsigned* tracks_, Itdb_iTunesDB* itdb_, unsigned album_limit_, gint64  when_)
+void  gpod_playlist_recent(unsigned* playlists_, unsigned* tracks_, Itdb_iTunesDB* itdb_, unsigned album_limit_, gint64  when_, const bool with_m3u_)
 {
     // get the last added track and use that for calcs
     if (when_ == 0) {
@@ -848,6 +874,7 @@ void  gpod_playlist_recent(unsigned* playlists_, unsigned* tracks_, Itdb_iTunesD
 #endif
     struct recent_create_pl_args  rcp_args = { 0 };
     rcp_args.itdb = itdb_;
+    rcp_args.with_m3u = with_m3u_;
     g_slist_foreach(recents, gpod_recent_create_playlists, &rcp_args);
 
     g_slist_free_full(albums, (GDestroyNotify)gpod_album_free);

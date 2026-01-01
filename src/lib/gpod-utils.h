@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021 Ray <whatdoineed2do @ gmail com>
+ *  Copyright (C) 2021-2026 Ray <whatdoineed2do @ gmail com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -89,7 +89,7 @@ void         gpod_track_htbl_destroy(GHashTable* htbl_);
 
 // create recent playlists from given date
 void  gpod_playlist_recent(unsigned* playlists_, unsigned* tracks_,
-	                   Itdb_iTunesDB* itdb_, unsigned album_limit_, gint64  when_);
+	                   Itdb_iTunesDB* itdb_, unsigned album_limit_, gint64  when_, bool with_m3u_);
 
 void  gpod_duration(char duration_[32], guint then_, guint now_);
 
