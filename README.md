@@ -263,6 +263,9 @@ The audio conversions are performed in their own threads and defaults to the num
 
 By default the copy will replace tracks (deleting existing version) with matchin `title`/`artist`/`album` - this assumes the user is intending to replace the tracks;  this behaviour is governed by `-r` flag.
 
+### M3u playlists
+It is possible to use `gpod-cp` to copy files to any directory / USB storage device, in particular USB sticks that may be used by a car audio systems or similar.  In this case, those audio systems perform their own scanning for audio files BUT obey `.m3u` playlists.  `gpod-cp` can generate these playlists when copying files to such devices by specifying the `-3` flag (similarly with the `gpod-recent-pl` utility).
+
 ## `gpod-tag`
 Simple metadata tool to modify the `iTunesDB`.  The underlying media files on the device are NOT updated.  The internal `id` or `ipod_path` of the files are required and can be determined from `gpod-ls`.  Use empty string (`""`) or `-1` to unset the string and int tags respectively
 ```
