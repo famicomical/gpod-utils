@@ -64,6 +64,7 @@ struct {
     struct {
       const char*  pl;
       unsigned  limit;
+      bool  with_m3u;
     } recent;
     unsigned short  max_threads;
     int  mediatype;
@@ -82,6 +83,7 @@ struct {
    .recent = {
        .pl = NULL,
        .limit = 50,
+       .with_m3u = false,
    },
    .max_threads = 1,
    .mediatype = ITDB_MEDIATYPE_AUDIO,
@@ -696,7 +698,8 @@ void  _usage(const char* argv0_)
 	     "\n"
 	     "  Playlist\n"
 	     "    -P  --playlist-name            <name>                   generate specific 'recently added' playlist - if not specified, default 'Recent' playlists are generated\n"
-	     "    -n  --playlist-limit           <limit>     '            recently added' pl limit - 0 to disable Recent playlists generation\n"
+	     "    -3  --playlist-with-m3u                                 generate optional m3u equivalent playlist\n"
+	     "    -n  --playlist-limit           <limit>                  recently added' pl limit - 0 to disable Recent playlists generation\n"
              "\n"
              ,basename, encoders, encoders_libavc, gpod_ff_enc_supported(opts.enc)->name);
     g_free (basename);
@@ -735,18 +738,22 @@ int main (int argc, char *argv[])
 
 	{"playlist-name", 		1, 0, 'P' },
 	{"playlist-limit", 		1, 0, 'n' },
+        {"playlist-with-m3u", 		2, 0, '3' },
 
 	{"help", 			0, 0, 'h' },
 
 	{0, 0, 0,  0 }
     };
-    char  opt_args[1+ sizeof(long_opts)*2] = { 0 };
+    char  opt_args[1+ sizeof(long_opts)*3] = { 0 };
     {
 	char*  og = opt_args;
 	const struct option* op = long_opts;
 	while (op->name) {
 	    *og++ = op->val;
 	    if (op->has_arg != no_argument) {
+                if (op->has_arg == optional_argument) {
+                    *og++ = ':';
+                }
 		*og++ = ':';
 	    }
 	    ++op;
@@ -909,6 +916,16 @@ int main (int argc, char *argv[])
 		    else opts.replace = atoi(optarg) == 1;
 		}
             } break;
+
+            case '3': {
+                opts.recent.with_m3u = true;
+                if (optarg) {
+                    if      (toupper(optarg[0]) == 'Y')  opts.recent.with_m3u = true;
+                    else if (toupper(optarg[0]) == 'N')  opts.recent.with_m3u = false;
+                    else opts.recent.with_m3u = atoi(optarg) == 1;
+                }
+                break;
+            }
 
             case 'h':
             default:
@@ -1118,9 +1135,9 @@ int main (int argc, char *argv[])
 
     if (added) {
 	if (opts.recent.pl == NULL &&  opts.recent.limit > 0) {
-	    g_print("generating Recent playlists...\n");
+	    g_print("generating Recent playlists%s...\n", opts.recent.with_m3u ? " (including m3u)" : "");
 	    gpod_playlist_recent(&stats.recent_playlists, &stats.recent_tracks,
-		    itdb, opts.recent.limit, time(NULL));
+		    itdb, opts.recent.limit, time(NULL), opts.recent.with_m3u);
 	}
 
         g_print("sync'ing iPod ...\n");  // even though we may have nothing left...
