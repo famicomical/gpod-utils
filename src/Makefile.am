@@ -1,5 +1,12 @@
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS}
 
+BUILT_SOURCES = version.h
+CLEANFILES = version.h
+
+version.h: FORCE
+	@$(srcdir)/git-version.sh
+FORCE:
+
 AM_CFLAGS = $(GPOD_UTILS_CFLAGS) $(GPOD_CFLAGS) $(GLIB_CFLAGS) $(JSONC_CFLAGS) $(SQLITE3_CFLAGS) $(FFMPEG_CFLAGS) -Ilib -Wunused-function -Wunused-variable -Wshadow -fno-common -D_XOPEN_SOURCE=500
 AM_CXXFLAGS = $(AM_CFLAGS)
 AM_LDFLAGS = $(GPOD_UTILS_LDFLAGS) $(GLIB_LIBS) $(GPOD_LIBS) $(FFMPEG_LDFLAGS) -lavformat -lavutil -lavcodec -lswscale
