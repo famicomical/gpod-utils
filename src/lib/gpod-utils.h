@@ -41,6 +41,11 @@ char* gpod_sortname(const char* name_);
 
 const char* gpod_default_mountpoint(char* dest_, size_t n_);
 
+/* list of supported generations, list ownership transfered to caller
+ * contents are static const char*, do not free
+ */
+GSList* gpod_supported();
+
 bool  gpod_write_supported(const Itdb_IpodInfo* ipi_);
 
 // recursively walk dir, adding files as strings to the list

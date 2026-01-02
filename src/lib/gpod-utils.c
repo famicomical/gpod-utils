@@ -125,29 +125,42 @@ const char* gpod_default_mountpoint(char* dest_, size_t n_)
     return dest_;
 }
 
+static const int  supported[] = {
+    ITDB_IPOD_GENERATION_FIRST,
+    ITDB_IPOD_GENERATION_SECOND,
+    ITDB_IPOD_GENERATION_THIRD,
+    ITDB_IPOD_GENERATION_FOURTH,
+    ITDB_IPOD_GENERATION_PHOTO,
+    ITDB_IPOD_GENERATION_MINI_1,
+    ITDB_IPOD_GENERATION_MINI_2,
+    ITDB_IPOD_GENERATION_VIDEO_1,
+    ITDB_IPOD_GENERATION_VIDEO_2,
+    ITDB_IPOD_GENERATION_NANO_1,
+    ITDB_IPOD_GENERATION_NANO_2,
+    -1,
+};
+
+GSList* gpod_supported()
+{
+    GSList*  l = NULL;
+    const int*  p = supported;
+    while (*p != -1) {
+        l = g_slist_append(l,
+                     itdb_info_get_ipod_generation_string(*p));
+        ++p;
+    }
+    return l;
+}
+
 bool  gpod_write_supported(const Itdb_IpodInfo* ipi_)
 {
     /* anything that is not on this list requires a hash/cksum'd
      * iTunesDB/iTunesCDB and sqlite3 db for the ipod which doesn't
      * work well
      */
-    static const int  supported[] = {
-	ITDB_IPOD_GENERATION_FIRST,
-	ITDB_IPOD_GENERATION_SECOND,
-	ITDB_IPOD_GENERATION_THIRD,
-	ITDB_IPOD_GENERATION_FOURTH,
-	ITDB_IPOD_GENERATION_PHOTO,
-	ITDB_IPOD_GENERATION_MINI_1,
-	ITDB_IPOD_GENERATION_MINI_2,
-	ITDB_IPOD_GENERATION_VIDEO_1,
-	ITDB_IPOD_GENERATION_VIDEO_2,
-	ITDB_IPOD_GENERATION_NANO_1,
-	ITDB_IPOD_GENERATION_NANO_2,
-	-1,
-    };
 
     const int*  p = supported;
-    while (*p)
+    while (*p != -1)
     {
 	if (*p == ipi_->ipod_generation) {
 	    return true;
