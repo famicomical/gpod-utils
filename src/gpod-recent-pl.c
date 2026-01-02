@@ -25,22 +25,27 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include <time.h>
 #include <limits.h>
 #include <unistd.h>
 
 #include <glib.h>
-#include <gmodule.h>
 #include <gpod/itdb.h>
 
-#include "gpod-db.h"
-#include "gpod-utils.h"
+#include "lib/gpod-utils.h"
 
 
 void  _usage(char* argv0_)
 {
     char *basename = g_path_get_basename (argv0_);
     g_print ("%s: %s-%s\n", basename, GIT_TAG, GIT_COMMIT);
+
+    GSList*  supported = gpod_supported();
+    g_print("  supported:\n");
+    for (GSList* s=supported; s; s=s->next) {
+        g_print("    %s\n", (const char*)s->data);
+    }
+    g_slist_free(supported);
+
     g_print ("usage: %s -M <dir ipod mount> | <file iTunesDB> [-n album_limit] [-3]\n"
              "\n"
              "    creates set of playlists (and optionally m3us) of recently added tracks\n"
@@ -134,6 +139,14 @@ main (int argc, char *argv[])
     if (itdb == NULL) {
         g_print("failed to open iTunesDB via (%s) %s\n", argtype, opts.itdb_path);
         return -1;
+    }
+
+    const Itdb_IpodInfo*  ipodinfo = itdb_device_get_ipod_info(itdev);
+    const bool  supported = gpod_write_supported(ipodinfo);
+    if (!supported) {
+        g_printerr("iPod %s %s not supported\n", itdb_info_get_ipod_generation_string(ipodinfo->ipod_generation), ipodinfo->model_number);
+        goto cleanup;
+        ret = -1;
     }
 
     unsigned  recent_pl, recent_tracks;
