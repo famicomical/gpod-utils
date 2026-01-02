@@ -37,7 +37,7 @@
 #include <glib/gstdio.h>
 #include <gpod/itdb.h>
 
-#include "gpod-utils.h"
+#include "lib/gpod-utils.h"
 
 int gpod_signal = 0;
 bool gpod_stop = false;
@@ -218,6 +218,14 @@ void  _usage(const char* argv0_)
 {
     char *basename = g_path_get_basename (argv0_);
     g_print ("%s: %s-%s\n", basename, GIT_TAG, GIT_COMMIT);
+
+    GSList*  supported = gpod_supported();
+    g_print("  supported:\n");
+    for (GSList* s=supported; s; s=s->next) {
+        g_print("    %s\n", (const char*)s->data);
+    }
+    g_slist_free(supported);
+
     g_print ("usage: %s  -M <dir ipod mount>  [ -a ] [ -i ] [-P] [ <file | ipod id> ... ]\n"
 	     "\n"
 	     "    Removes specified file(s) the iPod/iTunesDB\n"

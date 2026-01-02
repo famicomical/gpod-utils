@@ -25,19 +25,17 @@
 #include <string.h>
 #include <time.h>
 #include <limits.h>
-#include <unistd.h>
-#include <errno.h>
 #include <ctype.h>
 #include <getopt.h>
 
 #include <glib.h>
-#include <gmodule.h>
 #include <glib/gstdio.h>
 
 #include <gpod/itdb.h>
 
-#include "gpod-utils.h"
-#include "gpod-ffmpeg.h"
+#include "lib/gpod-utils.h"
+#include "lib/gpod-ffmpeg.h"
+#include "version.h"
 
 
 #define GPOD_MODE_LS  1<<0
@@ -157,7 +155,15 @@ static void  _cksum_q(Itdb_Track* track_, GThreadPool* cksum_tp_, const unsigned
 void  _usage(char* argv0_)
 {
     char *basename = g_path_get_basename (argv0_);
-    g_print ("%s\n", PACKAGE_STRING);
+    g_print ("%s: %s-%s\n", basename, GIT_TAG, GIT_COMMIT);
+
+    GSList*  supported = gpod_supported();
+    g_print("  supported:\n");
+    for (GSList* s=supported; s; s=s->next) {
+        g_print("    %s\n", (const char*)s->data);
+    }
+    g_slist_free(supported);
+
     g_print ("usage: %s -M <dir ipod mount> OPTIONS\n"
              "\n"
              "    validates the integrity of the iTunesDB (entries in iTunesDB compared to filessystem)\n"

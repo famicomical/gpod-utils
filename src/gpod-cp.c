@@ -47,8 +47,8 @@
 #include <glib/gdatetime.h>
 #include <gpod/itdb.h>
 
-#include "gpod-ffmpeg.h"
-#include "gpod-utils.h"
+#include "lib/gpod-ffmpeg.h"
+#include "lib/gpod-utils.h"
 
 struct {
     const char*  itdb_path;
@@ -673,6 +673,13 @@ void  _usage(const char* argv0_)
 	       _avversion_to_string(buf3, sizeof(buf3)-1, swresample_version()), AV_STRINGIFY(LIBSWRESAMPLE_VERSION),
 	       _avversion_to_string(buf4, sizeof(buf4)-1, swscale_version()),    AV_STRINGIFY(LIBSWSCALE_VERSION));
 
+    GSList*  supported = gpod_supported();
+    g_print("  supported:\n", g_slist_length(supported));
+    for (GSList* s=supported; s; s=s->next) {
+        g_print("    %s\n", (const char*)s->data);
+    }
+    g_slist_free(supported);
+
     g_print ("usage: %s  [OPTIONS] <file|directory> [<file|directory> ...]\n"
 	     "\n"
              "    adds specified files to iPod/iTunesDB\n"
@@ -741,6 +748,7 @@ int main (int argc, char *argv[])
 	{"playlist-limit", 		1, 0, 'n' },
         {"playlist-with-m3u", 		2, 0, '3' },
 
+	{"supported", 			0, 0, 's' },
 	{"help", 			0, 0, 'h' },
         {"version", 			0, 0, 'v' },
 
@@ -929,6 +937,7 @@ int main (int argc, char *argv[])
                 break;
             }
 
+            case 's':
             case 'v':
             case 'h':
             default:
