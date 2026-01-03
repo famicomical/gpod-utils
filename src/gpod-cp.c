@@ -673,8 +673,15 @@ void  _usage(const char* argv0_)
 	       _avversion_to_string(buf3, sizeof(buf3)-1, swresample_version()), AV_STRINGIFY(LIBSWRESAMPLE_VERSION),
 	       _avversion_to_string(buf4, sizeof(buf4)-1, swscale_version()),    AV_STRINGIFY(LIBSWSCALE_VERSION));
 
+    g_print ("  encoders:\n");
+    const struct gpod_ff_enc_support*  p = gpod_ff_encoders;
+    while (p->name) {
+        g_print("    %-11s  %s\n", p->name, p->supported ? "yes":"no");
+        ++p;
+    }
+
     GSList*  supported = gpod_supported();
-    g_print("  supported:\n", g_slist_length(supported));
+    g_print("  devices:\n", g_slist_length(supported));
     for (GSList* s=supported; s; s=s->next) {
         g_print("    %s\n", (const char*)s->data);
     }
