@@ -698,8 +698,12 @@ static int gpod_recent_create_m3u_playlist(const char* plname_, GSList* tracks_,
     unsigned  duration_sec;
     for (GSList* t=tracks_; t!=NULL; t=t->next) {
         const Itdb_Track*  trk = (const Itdb_Track*)t->data;
+        const char*  trkpath = trk->ipod_path;
+        if (*trkpath == '/') {
+            ++trkpath;
+        }
         duration_sec = trk->tracklen / 1000;
-        fprintf(fp, "#EXTINF:%u,%s\n%s\n", duration_sec, trk->title ? trk->title : "<unknown>", trk->ipod_path);
+        fprintf(fp, "#EXTINF:%u,%s\n%s\n", duration_sec, trk->title ? trk->title : "<unknown>", trkpath);
     }
     fclose(fp);
     return 0;
