@@ -77,7 +77,7 @@ main (int argc, char *argv[])
     int  ret = 0;
 
     int  c;
-    while ( (c=getopt(argc, argv, "M:Q:n:3:hv")) != EOF)
+    while ( (c=getopt(argc, argv, "M:Q:n:3hv")) != EOF)
     {
         switch (c) {
             case 'M':  opts.itdb_path = optarg;  break;
