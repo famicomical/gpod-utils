@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <strings.h>
 
 #include <gpod/itdb.h>
 
@@ -683,13 +684,104 @@ struct recent_create_pl_args {
     bool with_m3u;
 };
 
+
+static const char* _fat32_forbidden = "\"*/:<>?\\|";
+
+static bool is_reserved_name(const char* name_)
+{
+    const char* reserved[] = {
+        "CON","PRN","AUX","NUL",
+        "COM1","COM2","COM3","COM4","COM5","COM6","COM7","COM8","COM9",
+        "LPT1","LPT2","LPT3","LPT4","LPT5","LPT6","LPT7","LPT8","L`PT9",
+        NULL
+    };
+    for (const char** p = reserved; *p; ++p) {
+        if (strcasecmp(name_, *p) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static void sanitize_fat32_name(const char* src_, char* dst_, size_t dstlen_)
+{
+    if (!src_ || dstlen_ == 0) {
+        if (dstlen_) dst_[0] = '\0';
+        return;
+    }
+
+    // FAT long file name limit per component (safe bound)
+    const size_t  MAX_FILENAME = 255;
+    // keep room for extension when caller appends it
+    size_t  maxbase = dstlen_ - 1;
+    if (maxbase > MAX_FILENAME) maxbase = MAX_FILENAME;
+
+    size_t  wi = 0;
+    while (*src_ && (*src_ == ' ' || *src_ == '.')) {
+        ++src_;
+    }
+
+    for (const unsigned char* r = (const unsigned char*)src_; *r && wi < maxbase; ++r) {
+        unsigned char  c = *r;
+        // control chars 0x00-0x1F invalid
+        if (c <= 0x1F) {
+            dst_[wi++] = '-';
+            continue;
+        }
+        // path separators and forbidden set
+        if (c == '/' || c == '\\' || strchr(_fat32_forbidden, c) != NULL) {
+            dst_[wi++] = '-';
+            continue;
+        }
+        // keep printable characters, others map to '-'
+        dst_[wi++] = (isprint(c)) ? (char)c : '-';
+    }
+
+    // remove trailing spaces and dots
+    while (wi > 0 && (dst_[wi-1] == ' ' || dst_[wi-1] == '.')) {
+        --wi;
+    }
+    dst_[wi] = '\0';
+
+    // if empty, use fallback
+    if (wi == 0) {
+        strncpy(dst_, "untitled", dstlen_);
+        dst_[dstlen_-1] = '\0';
+    }
+
+    // avoid reserved names (exact match, case-insensitive)
+    if (is_reserved_name(dst_)) {
+        size_t l = strlen(dst_);
+        if (l + 1 < dstlen_) {
+            dst_[l] = '_';
+            dst_[l+1] = '\0';
+        } else {
+            // truncate one char and add underscore
+            dst_[dstlen_-2] = '_';
+            dst_[dstlen_-1] = '\0';
+        }
+    }
+}
+
 static int gpod_recent_create_m3u_playlist(const char* plname_, GSList* tracks_, const char* destdir_) {
-    char  out_path[PATH_MAX] = { 0 };
-    snprintf(out_path, sizeof(out_path), "%s/%s.m3u", destdir_, plname_);
+    char base[PATH_MAX];
+    char sanitized_base[PATH_MAX];
+    char out_path[PATH_MAX] = { 0 };
+
+    sanitize_fat32_name(plname_, base, sizeof(base));
+
+    // ensure final path fits; reserve for "/" and ".m3u"
+    size_t reserve = 1 + strlen(".m3u");
+    size_t max_base_len = sizeof(out_path) - strlen(destdir_) - reserve - 1;
+    if (max_base_len >= sizeof(sanitized_base)) max_base_len = sizeof(sanitized_base) - 1;
+
+    sanitize_fat32_name(base, sanitized_base, max_base_len + 1);
+
+    snprintf(out_path, sizeof(out_path), "%s/%s.m3u", destdir_, sanitized_base);
 
     FILE*  fp = fopen(out_path, "w");
     if (fp == NULL) {
-        g_print("Error creating m3u playlist '%s' - %s", out_path, strerror(errno));
+        g_print("Error creating m3u playlist `%s` - %s\n", out_path, strerror(errno));
         return -1;
     }
 
@@ -703,7 +795,10 @@ static int gpod_recent_create_m3u_playlist(const char* plname_, GSList* tracks_,
             ++trkpath;
         }
         duration_sec = trk->tracklen / 1000;
-        fprintf(fp, "#EXTINF:%u,%s\n%s\n", duration_sec, trk->title ? trk->title : "<unknown>", trkpath);
+        fprintf(fp, "#EXTINF:%u,%s - %s\n%s\n", duration_sec,
+            trk->artist ? trk->artist : "<unknown>",
+            trk->title ? trk->title : "<unknown>",
+            trkpath);
     }
     fclose(fp);
     return 0;
