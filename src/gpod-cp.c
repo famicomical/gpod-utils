@@ -52,6 +52,7 @@
 
 struct {
     const char*  itdb_path;
+    bool init;
     bool cksum;
     bool  force;
     enum gpod_ff_enc  enc;
@@ -71,6 +72,7 @@ struct {
     int  mediatype;
 } opts = {
    .itdb_path =  NULL,
+   .init = false,
    .cksum = true,
    .force = false,
    .enc = GPOD_FF_ENC_FDKAAC,
@@ -694,6 +696,7 @@ void  _usage(const char* argv0_)
              "\n"
 	     "  iPod\n"
              "    -M  --mount-point              <iPod dir>               location of iPod data, as directory mount point\n"
+             "    -I  --init                                              initialise a 'fake' iPod, useful for using gpod-utils to manage a USB device for music - requires -M\n"
 	     "    -T  --threads                  <max threads>            number of threads for xcoding/copying - default: #system vCPUs\n"
 	     "\n"
              "    -c  --disable-tracks-checksum-validate                  disable generate checksum validation of each file in iTunesDB\n"
@@ -738,6 +741,7 @@ int main (int argc, char *argv[])
 	{"mount-point", 		1, 0, 'M' },
 	{"force-unsupported",		0, 0, 'F' },
 	{"threads", 			1, 0, 'T' },
+        {"init",         		0, 0, 'I' },
 
 	{"disable-tracks-checksum-validate", 0, 0, 'c' },
 	{"disable-tracks-sanitize",	2, 0, 'S' },
@@ -788,6 +792,7 @@ int main (int argc, char *argv[])
     {
         switch (c) {
             case 'M':  opts.itdb_path = optarg;  break;
+            case 'I':  opts.init = true;  break;
             case 'c':  opts.cksum = false;  break;
             case 'F':  opts.force = true;  break;
 
@@ -955,6 +960,32 @@ int main (int argc, char *argv[])
     char  mountpoint[PATH_MAX] = { 0 };
     if (opts.itdb_path == NULL) {
 	opts.itdb_path = gpod_default_mountpoint(mountpoint, sizeof(mountpoint));
+    }
+    else
+    {
+        if (opts.init)
+        {
+            // check that its not already initialised
+            sprintf (mountpoint, "%s/%s", opts.itdb_path, "iPod_Control/iTunes/iTunesDB");
+            if (g_file_test(mountpoint, G_FILE_TEST_EXISTS)) {
+                g_printerr("gpod-utils device already initialised under '%s'\n", mountpoint);
+                return -1;
+            }
+            mountpoint[0] = '\0';
+
+            g_print("initialising gpod-utils device '%s'\n", opts.itdb_path);
+            if (!itdb_init_ipod (opts.itdb_path, "MA446", "gpod-utils device", &error)) {
+                g_printerr("failed to initialise %s - %s\n", opts.itdb_path, error->message ? error->message : "<unknown>");
+                g_error_free(error);
+                return -1;
+            }
+
+            if ( !(optind < argc) ) {
+                // no other work to do
+                return 0;
+            }
+        }
+
     }
 
     if (opts.itdb_path == NULL || opts.enc == GPOD_FF_ENC_MAX || opts.time_added == -1) {
