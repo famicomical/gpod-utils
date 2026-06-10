@@ -226,6 +226,17 @@ _track(const char* file_, struct gpod_ff_transcode_ctx* xfrm_, uint64_t uuid_, I
 	itdb_track_set_thumbnails_from_data(track, mi.coverart.data, mi.coverart.size);
     }
 
+    // no embedded artwork; fall back to cover.jpg alongside the src file
+    if (opts.artwork && !itdb_track_has_thumbnails(track)) {
+	gchar*  dir = g_path_get_dirname(file_);
+	gchar*  cover = g_build_filename(dir, "cover.jpg", NULL);
+	if (g_file_test(cover, G_FILE_TEST_EXISTS)) {
+	    itdb_track_set_thumbnails(track, cover);
+	}
+	g_free(cover);
+	g_free(dir);
+    }
+
     gpod_ff_media_info_free(&mi);
 
     // needs full path because the track has no itdb structure at this point
