@@ -63,6 +63,7 @@ struct {
     time_t  time_added;
     bool  sanitize;
     bool  replace;
+    bool  update_meta;
     struct {
       const char*  pl;
       unsigned  limit;
@@ -83,6 +84,7 @@ struct {
    .time_added = 0,
    .sanitize = true,
    .replace = true,
+   .update_meta = false,
    .recent = {
        .pl = NULL,
        .limit = 50,
@@ -98,6 +100,7 @@ struct {
     uint32_t  other;
     size_t    bytes;
     guint     xcode_time;
+    uint32_t  meta_updated;
 
     unsigned  recent_playlists;
     unsigned  recent_tracks;
@@ -236,6 +239,56 @@ static bool  _track_exists(const Itdb_Track* track_, const struct gpod_track_fs_
     return gpod_track_fs_hash_contains(tfsh_, track_, path_);
 }
 
+static bool  _track_meta_str_upd(gchar** onto_, const gchar* from_)
+{
+    if (g_strcmp0(*onto_, from_) == 0) {
+        return false;
+    }
+    g_free(*onto_);
+    *onto_ = g_strdup(from_);
+    return true;
+}
+
+/* refresh metadata on existing iPod track from the (cksum matched) track
+ * generated off the src file; the audio is untouched on device
+ */
+static bool  _track_meta_sync(Itdb_Track* onto_, const Itdb_Track* from_)
+{
+    bool  changed = false;
+
+    if (_track_meta_str_upd(&onto_->title, from_->title)) {
+        g_free(onto_->sort_title);
+        onto_->sort_title = gpod_sortname(onto_->title);
+        changed = true;
+    }
+    if (_track_meta_str_upd(&onto_->album, from_->album)) {
+        g_free(onto_->sort_album);
+        onto_->sort_album = gpod_sortname(onto_->album);
+        changed = true;
+    }
+    if (_track_meta_str_upd(&onto_->artist, from_->artist)) {
+        g_free(onto_->sort_artist);
+        onto_->sort_artist = gpod_sortname(onto_->artist);
+        changed = true;
+    }
+    if (_track_meta_str_upd(&onto_->genre,   from_->genre))    changed = true;
+    if (_track_meta_str_upd(&onto_->comment, from_->comment))  changed = true;
+
+    if (onto_->track_nr != from_->track_nr) {
+        onto_->track_nr = from_->track_nr;
+        changed = true;
+    }
+    if (onto_->year != from_->year) {
+        onto_->year = from_->year;
+        changed = true;
+    }
+
+    if (changed) {
+        onto_->time_modified = time(NULL);
+    }
+    return changed;
+}
+
 
 /* writes the itunedb and clears pending list
  * if the itunes write fails, rollback all the files listed in pending
@@ -287,7 +340,16 @@ static int  gpod_cp_track(const struct gpod_cp_log_ctx* lctx_,
     const bool  dupl = opts.cksum && _track_exists(track, tfsh_, xfrm_->path[0] ? xfrm_->path : path_);
 
     if (dupl) {
-        gpod_cp_log(lctx_, "{ title='%s' artist='%s' album='%s' ipod_path= *** DUPL %lu *** }\n", track->title ? track->title : "", track->artist ? track->artist : "", track->album ? track->album : "", gpod_saved_cksum(track));
+        unsigned  updated = 0;
+        if (opts.update_meta) {
+            for (GSList* i=gpod_track_fs_hash_lookup(tfsh_, track); i!=NULL; i=i->next) {
+                if (_track_meta_sync((Itdb_Track*)i->data, track)) {
+                    ++updated;
+                }
+            }
+            stats.meta_updated += updated;
+        }
+        gpod_cp_log(lctx_, "{ title='%s' artist='%s' album='%s' ipod_path= *** DUPL %lu%s *** }\n", track->title ? track->title : "", track->artist ? track->artist : "", track->album ? track->album : "", gpod_saved_cksum(track), updated ? " META UPD" : "");
         itdb_track_free(*track_);
         *track_ = NULL;
 	++(*dupl_);
@@ -703,6 +765,8 @@ void  _usage(const char* argv0_)
              "                                                            comparison to prevent duplicate\n"
 	     "    -S  --disable-tracks-sanitize                           disable text sanitization; chars like ’ to '\n"
 	     "    -r  --tracks-replace           <Y|N>                    replace existing track of same title/album/artist - default: Y\n"
+	     "    -u  --tracks-update-meta                                on checksum duplicate (same audio), refresh iPod track metadata\n"
+	     "                                                            (title/artist/album/genre/comment/track#/year) from file - default: N\n"
 	     "    -m  --tracks-media-type        <media type>             podcast|audiobook (audio/video determined automatically)\n"
 	     "    -t  --tracks-time-added        <time added>             spoof 'added' time to specified date in ISO8601\n"
 	     "    -a  --disable-artwork                                   disable sync'ing artwork from audio file to iPod\n"
@@ -746,6 +810,7 @@ int main (int argc, char *argv[])
 	{"disable-tracks-checksum-validate", 0, 0, 'c' },
 	{"disable-tracks-sanitize",	2, 0, 'S' },
 	{"tracks-replace",		2, 0, 'r' },
+	{"tracks-update-meta",		0, 0, 'u' },
 	{"tracks-media-type", 		1, 0, 'm' },
 	{"tracks-time-added", 		1, 0, 't' },
 	{"disable-artwork", 		0, 0, 'a' },
@@ -949,6 +1014,8 @@ int main (int argc, char *argv[])
                 break;
             }
 
+            case 'u':  opts.update_meta = true;  break;
+
             case 's':
             case 'v':
             case 'h':
@@ -990,6 +1057,11 @@ int main (int argc, char *argv[])
 
     if (opts.itdb_path == NULL || opts.enc == GPOD_FF_ENC_MAX || opts.time_added == -1) {
         _usage(argv[0]);
+    }
+
+    if (opts.update_meta && !opts.cksum) {
+        g_printerr("--tracks-update-meta needs checksum validation, ignoring (drop -c)\n");
+        opts.update_meta = false;
     }
 
     if ( !(optind < argc) ) {
@@ -1217,7 +1289,12 @@ int main (int argc, char *argv[])
     }
 
 
-    g_print("iPod total tracks=%u  %u/%u items %s  dupl=%u  music=%u video=%u other=%u  in %s%s (ttl xcode %s)\n", g_list_length(itdb_playlist_mpl(itdb)->members), ret < 0 ? 0 : added, N, stats_size, dupl, stats.music, stats.video, stats.other, duration, userterm, xcode_duration);
+    char  meta_upd[32] = { 0 };
+    if (opts.update_meta) {
+	snprintf(meta_upd, sizeof(meta_upd), " meta-upd=%u", stats.meta_updated);
+    }
+
+    g_print("iPod total tracks=%u  %u/%u items %s  dupl=%u%s  music=%u video=%u other=%u  in %s%s (ttl xcode %s)\n", g_list_length(itdb_playlist_mpl(itdb)->members), ret < 0 ? 0 : added, N, stats_size, dupl, meta_upd, stats.music, stats.video, stats.other, duration, userterm, xcode_duration);
 
     itdb_device_free(itdev);
     itdb_free(itdb);
