@@ -63,7 +63,6 @@ struct {
     time_t  time_added;
     bool  sanitize;
     bool  replace;
-    bool  update_meta;
     struct {
       const char*  pl;
       unsigned  limit;
@@ -84,7 +83,6 @@ struct {
    .time_added = 0,
    .sanitize = true,
    .replace = true,
-   .update_meta = false,
    .recent = {
        .pl = NULL,
        .limit = 50,
@@ -351,15 +349,14 @@ static int  gpod_cp_track(const struct gpod_cp_log_ctx* lctx_,
     const bool  dupl = opts.cksum && _track_exists(track, tfsh_, xfrm_->path[0] ? xfrm_->path : path_);
 
     if (dupl) {
+        // same audio already on device; refresh its db metadata from the file
         unsigned  updated = 0;
-        if (opts.update_meta) {
-            for (GSList* i=gpod_track_fs_hash_lookup(tfsh_, track); i!=NULL; i=i->next) {
-                if (_track_meta_sync((Itdb_Track*)i->data, track)) {
-                    ++updated;
-                }
+        for (GSList* i=gpod_track_fs_hash_lookup(tfsh_, track); i!=NULL; i=i->next) {
+            if (_track_meta_sync((Itdb_Track*)i->data, track)) {
+                ++updated;
             }
-            stats.meta_updated += updated;
         }
+        stats.meta_updated += updated;
         gpod_cp_log(lctx_, "{ title='%s' artist='%s' album='%s' ipod_path= *** DUPL %lu%s *** }\n", track->title ? track->title : "", track->artist ? track->artist : "", track->album ? track->album : "", gpod_saved_cksum(track), updated ? " META UPD" : "");
         itdb_track_free(*track_);
         *track_ = NULL;
@@ -775,8 +772,6 @@ void  _usage(const char* argv0_)
              "                                                            comparison to prevent duplicate\n"
 	     "    -S  --disable-tracks-sanitize                           disable text sanitization; chars like ’ to '\n"
 	     "    -r  --tracks-replace           <Y|N>                    replace existing track of same title/album/artist - default: Y\n"
-	     "    -u  --tracks-update-meta                                on checksum duplicate (same audio), refresh iPod track metadata\n"
-	     "                                                            (title/artist/album/genre/comment/track#/year) from file - default: N\n"
 	     "    -m  --tracks-media-type        <media type>             podcast|audiobook (audio/video determined automatically)\n"
 	     "    -t  --tracks-time-added        <time added>             spoof 'added' time to specified date in ISO8601\n"
 	     "    -a  --disable-artwork                                   disable sync'ing artwork from audio file to iPod\n"
@@ -820,7 +815,6 @@ int main (int argc, char *argv[])
 	{"disable-tracks-checksum-validate", 0, 0, 'c' },
 	{"disable-tracks-sanitize",	2, 0, 'S' },
 	{"tracks-replace",		2, 0, 'r' },
-	{"tracks-update-meta",		0, 0, 'u' },
 	{"tracks-media-type", 		1, 0, 'm' },
 	{"tracks-time-added", 		1, 0, 't' },
 	{"disable-artwork", 		0, 0, 'a' },
@@ -1024,7 +1018,6 @@ int main (int argc, char *argv[])
                 break;
             }
 
-            case 'u':  opts.update_meta = true;  break;
 
             case 's':
             case 'v':
@@ -1067,11 +1060,6 @@ int main (int argc, char *argv[])
 
     if (opts.itdb_path == NULL || opts.enc == GPOD_FF_ENC_MAX || opts.time_added == -1) {
         _usage(argv[0]);
-    }
-
-    if (opts.update_meta && !opts.cksum) {
-        g_printerr("--tracks-update-meta needs checksum validation, ignoring (drop -c)\n");
-        opts.update_meta = false;
     }
 
     if ( !(optind < argc) ) {
@@ -1300,7 +1288,7 @@ int main (int argc, char *argv[])
 
 
     char  meta_upd[32] = { 0 };
-    if (opts.update_meta) {
+    if (stats.meta_updated) {
 	snprintf(meta_upd, sizeof(meta_upd), " meta-upd=%u", stats.meta_updated);
     }
 
